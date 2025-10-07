@@ -1,0 +1,6 @@
+[submodule "rmv"]
+	path = rmv
+	url = https://github.com/mikkurogue/rmv
+[submodule "fview"]
+	path = fview
+	url = https://github.com/mikkurogue/fview
