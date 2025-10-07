@@ -24,16 +24,19 @@ jobs:
       - name: Update submodules and get updated list
         id: update_submodules
         run: |
-          # Fetch latest commits for all submodules and checkout (no merge/rebase)
-          git submodule update --remote
+          # Update each submodule to latest master
+          git submodule foreach 'git fetch origin master && git checkout FETCH_HEAD'
+          
+          # Stage the submodule changes
+          git add .
           
           # Check if there are any changes
-          if git diff --quiet; then
+          if git diff --cached --quiet; then
             echo "No submodule updates"
             echo "updated_submodules=" >> $GITHUB_OUTPUT
           else
             # List submodules that actually changed
-            UPDATED_SUBMODULES=$(git diff --name-only | grep -E '^[^/]+/' | cut -d'/' -f1 | sort -u | tr '\n' ' ' || true)
+            UPDATED_SUBMODULES=$(git diff --cached --name-only | grep -E '^[^/]+/' | cut -d'/' -f1 | sort -u | tr '\n' ' ' || true)
             echo "updated_submodules=$UPDATED_SUBMODULES" >> $GITHUB_OUTPUT
             echo "Updated submodules: $UPDATED_SUBMODULES"
           fi
@@ -41,7 +44,6 @@ jobs:
       - name: Commit and push if submodules changed
         if: steps.update_submodules.outputs.updated_submodules != ''
         run: |
-          git add .
-          UPDATED_LIST=$(echo "${{ steps.update_submodules.outputs.updated_submodules }}" | tr '\n' ',' | sed 's/,$//')
+          UPDATED_LIST=$(echo "${{ steps.update_submodules.outputs.updated_submodules }}" | tr ' ' ',' | sed 's/,$//')
           git commit -m "chore: update submodules: $UPDATED_LIST [$(date -u +'%Y-%m-%d %H:%M:%S UTC')]"
           git push origin master
