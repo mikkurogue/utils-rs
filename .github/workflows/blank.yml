@@ -20,6 +20,8 @@ jobs:
         run: |
           git config user.name "mikkurogue"
           git config user.email "michael.lindemans@outlook.com"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
 
       - name: Update submodules and get updated list
         id: update_submodules
@@ -50,4 +52,6 @@ jobs:
         run: |
           UPDATED_LIST=$(echo "${{ steps.update_submodules.outputs.updated_submodules }}" | tr ' ' ',' | sed 's/,$//')
           git commit -m "chore: update submodules: $UPDATED_LIST [$(date -u +'%Y-%m-%d %H:%M:%S UTC')]"
-          git push origin master
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
