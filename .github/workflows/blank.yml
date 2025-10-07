@@ -24,21 +24,24 @@ jobs:
       - name: Update submodules and get updated list
         id: update_submodules
         run: |
-          # Update each submodule to latest master
-          git submodule foreach 'git fetch origin master && git checkout FETCH_HEAD'
+          # Update each submodule to latest master (suppressing detached HEAD warnings)
+          git submodule foreach -q 'git fetch origin master:master 2>&1 | grep -v "detached HEAD" || true; git checkout master'
           
-          # Stage the submodule changes
-          git add .
+          # Check what changed in the parent repo
+          git diff --exit-code > /dev/null 2>&1
+          DIFF_EXIT_CODE=$?
           
-          # Check if there are any changes
-          if git diff --cached --quiet; then
+          if [ $DIFF_EXIT_CODE -eq 0 ]; then
             echo "No submodule updates"
             echo "updated_submodules=" >> $GITHUB_OUTPUT
           else
             # List submodules that actually changed
-            UPDATED_SUBMODULES=$(git diff --cached --name-only | grep -E '^[^/]+/' | cut -d'/' -f1 | sort -u | tr '\n' ' ' || true)
+            UPDATED_SUBMODULES=$(git diff --name-only | cut -d'/' -f1 | sort -u | tr '\n' ' ' || true)
             echo "updated_submodules=$UPDATED_SUBMODULES" >> $GITHUB_OUTPUT
             echo "Updated submodules: $UPDATED_SUBMODULES"
+            
+            # Stage the changes
+            git add .
           fi
 
       - name: Commit and push if submodules changed
