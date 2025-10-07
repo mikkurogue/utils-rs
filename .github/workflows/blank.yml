@@ -24,8 +24,12 @@ jobs:
       - name: Update submodules and get updated list
         id: update_submodules
         run: |
-          # Update each submodule to latest master (suppressing detached HEAD warnings)
-          git submodule foreach -q 'git fetch origin master:master 2>&1 | grep -v "detached HEAD" || true; git checkout master'
+          # Update each submodule to latest master
+          git submodule foreach '
+            git fetch origin master &&
+            git checkout master &&
+            git reset --hard origin/master
+          '
           
           # Check what changed in the parent repo
           git diff --exit-code > /dev/null 2>&1
