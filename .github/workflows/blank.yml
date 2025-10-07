@@ -1,0 +1,40 @@
+name: Daily Submodule Update Check
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # every day at 00:00 UTC
+  workflow_dispatch:       # allows manual run too
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout utils repo (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.PAT }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "mikkurogue"
+          git config user.email "michael.lindemans@outlook.com"
+
+      - name: Update submodules and get updated list
+        id: update_submodules
+        run: |
+          # Fetch latest commits for all submodules
+          git submodule update --remote --merge
+
+          # List submodules that actually changed
+          UPDATED_SUBMODULES=$(git diff --submodule=log --name-only | grep -E '^[^/]+/' || true)
+          echo "updated_submodules=$UPDATED_SUBMODULES" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if submodules changed
+        if: steps.update_submodules.outputs.updated_submodules != ''
+        run: |
+          git add .
+          UPDATED_LIST=$(echo "${{ steps.update_submodules.outputs.updated_submodules }}" | tr '\n' ',' | sed 's/,$//')
+          git commit -m "chore: update submodules: $UPDATED_LIST [$(date -u +'%Y-%m-%d %H:%M:%S UTC')]"
+          git push origin master
