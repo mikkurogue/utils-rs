@@ -31,16 +31,13 @@ jobs:
             git reset --hard origin/master
           '
           
-          # Check what changed in the parent repo
-          git diff --exit-code > /dev/null 2>&1
-          DIFF_EXIT_CODE=$?
-          
-          if [ $DIFF_EXIT_CODE -eq 0 ]; then
+          # Check what changed in the parent repo (git diff returns 1 if there are changes, 0 if none)
+          if git diff --quiet; then
             echo "No submodule updates"
             echo "updated_submodules=" >> $GITHUB_OUTPUT
           else
             # List submodules that actually changed
-            UPDATED_SUBMODULES=$(git diff --name-only | cut -d'/' -f1 | sort -u | tr '\n' ' ' || true)
+            UPDATED_SUBMODULES=$(git diff --name-only | cut -d'/' -f1 | sort -u | tr '\n' ' ')
             echo "updated_submodules=$UPDATED_SUBMODULES" >> $GITHUB_OUTPUT
             echo "Updated submodules: $UPDATED_SUBMODULES"
             
