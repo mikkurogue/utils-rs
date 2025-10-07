@@ -1,6 +1,8 @@
 [submodule "rmv"]
 	path = rmv
 	url = https://github.com/mikkurogue/rmv
+    branch = master
 [submodule "fview"]
 	path = fview
 	url = https://github.com/mikkurogue/fview
+    branch = master
